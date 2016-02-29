@@ -4,7 +4,7 @@
   "description": "A newer, better LANBot",
   "main": "app.js",
   "scripts": {
-    "run": "babel-node --presets es2015 app.js"
+    "start": "babel-node --presets es2015 app.js"
   },
   "repository": {
     "type": "git",
