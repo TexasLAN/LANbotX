@@ -51,6 +51,14 @@ controller.hears(
  * Initalize scripts
  */
 for(const file of fs.readdirSync('./src/')) {
-  const script = require('./src/' + file).default;
-  new script(controller);
+  if (Path.extname(file) !== '.js') {
+    continue;
+  }
+
+  try {
+    const script = require('./src/' + file).default;
+    new script(controller);
+  } catch (e) {
+    console.error(`Unable to load ${file}: ${e.stack}`);
+  }
 }
