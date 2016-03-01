@@ -12,6 +12,7 @@
 export default class Karma {
   constructor(controller) {
     this.changeKarma = this.changeKarma.bind(this);
+    this.printScore = this.printScore.bind(this);
 
     // caches
     this.controller = controller;
@@ -30,10 +31,16 @@ export default class Karma {
       ['ambient'],
       (bot, message) => this.changeKarma(bot, message, false)
     );
+
+    controller.hears(
+      "score (for\\s)?(.*)",
+      ['direct_mention', 'direct_message'],
+      this.printScore
+    );
   }
 
   changeKarma(bot, message, increment) {
-    let name = message.match[1];
+    let name = message.match[1].trim().toLowerCase();
     const reason = message.match[5];
 
     // No name, use last item used
@@ -43,24 +50,23 @@ export default class Karma {
 
     this.controller.storage.karma.get(name, (err, item) => {
       if (!item) {
-        item = { id: name };
-      }
-
-      // Set the karma if it doesn't exist
-      if (!item.karma) {
-        item.karma = { score: 0, reasons: [] };
+        item = {
+          id: name,
+          score: 0,
+          reasons: [],
+        };
       }
 
       // Update score
       if (increment) {
-        item.karma.score++;
+        item.score++;
       } else {
-        item.karma.score--;
+        item.score--;
       }
 
       // Update reason
       if (reason) {
-        item.karma.reasons.push(reason);
+        item.reasons.push(reason);
       }
 
       // Save
@@ -70,7 +76,24 @@ export default class Karma {
       this.cache[message.channel] = name;
 
       // Send the message
-      bot.reply(message, `${name} has ${item.karma.score} points`);
+      bot.reply(message, `${name} has ${item.score} points`);
+    });
+  }
+
+  printScore(bot, message) {
+    let name = message.match[2].trim().toLowerCase();
+    this.controller.storage.karma.get(name, (err, item) => {
+      if (name.charAt(0) === ':') {
+        name = name.replace(/(^\s*@)|([,\s]*$)/g, '')
+      } else {
+        name = name.replace(/(^\s*@)|([,:\s]*$)/g, '')
+      }
+
+      if (item.reasons.length > 0) {
+        bot.reply(message, `${name} has ${item.score} points`);
+      } else {
+        bot.reply(message, `${name} has ${item.score} points`);
+      }
     });
   }
 }
