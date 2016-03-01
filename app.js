@@ -12,6 +12,8 @@
 
 import Botkit from 'botkit';
 import redis from 'botkit/lib/storage/redis_storage';
+import fs from 'fs';
+import Path from 'path';
 
 /**
  * Initialize botkit
@@ -48,11 +50,7 @@ controller.hears(
 /**
  * Initalize scripts
  */
-import Karma from './src/karma';
-new Karma(controller);
-
-import Responses from './src/responses';
-new Responses(controller);
-
-import ImageMe from './src/image-me';
-new ImageMe(controller);
+for(const file of fs.readdirSync('./src/')) {
+  const script = require('./src/' + file).default;
+  new script(controller);
+}
