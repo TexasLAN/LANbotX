@@ -1,9 +1,3 @@
-import request from 'request';
-
-const googleCseId = process.env.HUBOT_GOOGLE_CSE_ID;
-const googleApiKey = process.env.HUBOT_GOOGLE_CSE_KEY;
-const url = 'https://www.googleapis.com/customsearch/v1';
-
 /**
  * image-me.js, a hubot-google-images clone for botkit
  *
@@ -16,6 +10,13 @@ const url = 'https://www.googleapis.com/customsearch/v1';
  *   @<botname> image me <query>
  *   @<botname> animate me <query>
  */
+
+import request from 'request';
+
+const googleCseId = process.env.HUBOT_GOOGLE_CSE_ID;
+const googleApiKey = process.env.HUBOT_GOOGLE_CSE_KEY;
+const url = 'https://www.googleapis.com/customsearch/v1';
+
 export default class ImageMe {
   constructor(controller) {
     this.imageMe = this.imageMe.bind(this);

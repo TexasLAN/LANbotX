@@ -1,7 +1,3 @@
-import express from 'express';
-
-const app = express();
-
 /**
  * responses.js, a slackbot-like response manager
  *
@@ -14,6 +10,11 @@ const app = express();
  *   <trigger> // response
  *   To setup trigger / response pairs, visit the express endpoint
  */
+
+import express from 'express';
+
+const app = express();
+
 export default class Responses {
   constructor(controller) {
     // This binding *sigh*
