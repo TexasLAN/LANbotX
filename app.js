@@ -11,12 +11,19 @@
  */
 
 import Botkit from 'botkit';
+import redis from 'botkit/lib/storage/redis_storage';
 
 /**
  * Initialize botkit
  */
+const storage = redis({
+  namespace: 'lanbot',
+  methods: ['teams', 'users', 'channels', 'responses', 'karma'],
+});
+
 const controller = Botkit.slackbot({
   debug: false,
+  storage: storage,
 });
 
 controller.spawn({
@@ -43,3 +50,9 @@ controller.hears(
  */
 import Karma from './src/karma';
 new Karma(controller);
+
+import Responses from './src/responses';
+new Responses(controller);
+
+import ImageMe from './src/image-me';
+new ImageMe(controller);
