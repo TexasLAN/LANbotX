@@ -56,7 +56,7 @@ for(const file of fs.readdirSync('./src/')) {
   }
 
   try {
-    const script = require('./src/' + file).default;
+    const script = require(`./src/${file}`).default;
     new script(controller);
   } catch (e) {
     console.error(`Unable to load ${file}: ${e.stack}`);
