@@ -32,6 +32,7 @@ export default class Karma {
       (bot, message) => this.changeKarma(bot, message, false)
     );
 
+    // score
     controller.hears(
       "score (for\\s)?(.*)",
       ['direct_mention', 'direct_message'],
