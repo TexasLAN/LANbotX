@@ -17,65 +17,58 @@
 import passport from 'passport';
 import { Strategy as OmegaStrategy } from 'passport-omega';
 
-export default class Responses {
-  constructor(controller) {
-    this.loadResponses = this.loadResponses.bind(this);
-    this.setupServer = this.setupServer.bind(this);
-    this.initResponses = this.initResponses.bind(this);
+export default (controller) => {
+  let responses = [];
 
-    // Setup
-    this.controller = controller;
-    this.responses = [];
-    this.loadResponses();
-    this.setupServer();
-  }
+  // ====================
+  // Setup Express server
+  // ====================
 
-  setupServer() {
-    // setup passport for authentication via Omega
-    passport.use(new OmegaStrategy({
-      clientID: process.env.OMEGA_APP_ID,
-      clientSecret: process.env.OMEGA_APP_SECRET,
-      callbackURL: process.env.OMEGA_CALLBACK,
-    }, (accessToken, refreshToken, profile, done) => {
-      done(null, profile);
-    }));
+  // setup passport for Omega authentication
+  passport.use(new OmegaStrategy({
+    clientID: process.env.OMEGA_APP_ID,
+    clientSecret: process.env.OMEGA_APP_SECRET,
+    callbackURL: process.env.OMEGA_CALLBACK,
+  }, (accessToken, refreshToken, profile, done) => {
+    done(null, profile);
+  }));
 
-    // setup the webserver
-    this.controller.setupWebserver(process.env.PORT, (err, app) => {
-      app.set('view engine', 'jade');
+  // setup the webserver
+  controller.setupWebserver(process.env.PORT, (err, app) => {
+    app.set('view engine', 'jade');
 
-      app.get('/', (req, res) => {
-        res.render('index');
-      });
-
-      // Omega Login
-      app.get('/auth/omega', passport.authenticate('omega'));
-
-      app.get(
-        '/auth/omega/callback',
-        passport.authenticate('omega', {
-          successRedirect: '/dashboard',
-          failureRedirect: '/',
-        })
-      );
-
-      // Responses dashboard
-      app.get('/dashboard', (req, res) => {
-        res.render('dashboard', { responses: this.responses });
-      });
+    app.get('/', (req, res) => {
+      res.render('index');
     });
-  }
 
-  // Get the responses from redis
-  loadResponses() {
-    this.controller.storage.responses.all(
-      this.initResponses,
-      { type: 'array' }
+    // Omega Login
+    app.get('/auth/omega', passport.authenticate('omega'));
+
+    app.get(
+      '/auth/omega/callback',
+      passport.authenticate('omega', {
+        successRedirect: '/dashboard',
+        failureRedirect: '/',
+      })
     );
-  }
+
+    // Responses dashboard
+    app.get('/dashboard', (req, res) => {
+      res.render('dashboard', { responses: responses });
+    });
+  });
+
+  // ===============
+  // Setup responses
+  // ===============
+
+  controller.storage.responses.all(
+    initResponses,
+    { type: 'array' }
+  );
 
   // Setup listeners for all responses
-  initResponses(err, responses) {
+  const initResponses = (err, responses) => {
     this.responses = responses;
     for (const response in responses) {
       this.controller.hears(
@@ -86,5 +79,5 @@ export default class Responses {
         }
       );
     }
-  }
+  };
 }

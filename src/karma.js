@@ -9,47 +9,40 @@
  *   <item>-- // decrement score for item
  */
 
-export default class Karma {
-  constructor(controller) {
-    this.changeKarma = this.changeKarma.bind(this);
-    this.printScore = this.printScore.bind(this);
+export default (controller) => {
+  const cache = {};
 
-    // caches
-    this.controller = controller;
-    this.cache = {};
+  // ++
+  controller.hears(
+    "^([\\s\\w'@.\\-:]*)\\s*(\\+\\+)(?:\\s+(?:for|because|cause|cuz|as)\\s+(.+))?$",
+    ['ambient'],
+    (bot, message) => changeKarma(bot, message, true)
+  );
 
-    // ++
-    controller.hears(
-      "^([\\s\\w'@.\\-:]*)\\s*(\\+\\+)(?:\\s+(?:for|because|cause|cuz|as)\\s+(.+))?$",
-      ['ambient'],
-      (bot, message) => this.changeKarma(bot, message, true)
-    );
+  // --
+  controller.hears(
+    "^([\\s\\w'@.\\-:]*)\\s*(--|—)(?:\\s+(?:for|because|cause|cuz|as)\\s+(.+))?$",
+    ['ambient'],
+    (bot, message) => changeKarma(bot, message, false)
+  );
 
-    // --
-    controller.hears(
-      "^([\\s\\w'@.\\-:]*)\\s*(--|—)(?:\\s+(?:for|because|cause|cuz|as)\\s+(.+))?$",
-      ['ambient'],
-      (bot, message) => this.changeKarma(bot, message, false)
-    );
+  // score
+  controller.hears(
+    "score (for\\s)?(.*)",
+    ['direct_mention', 'direct_message'],
+    (bot, message) => printScore(bot, message)
+  );
 
-    // score
-    controller.hears(
-      "score (for\\s)?(.*)",
-      ['direct_mention', 'direct_message'],
-      this.printScore
-    );
-  }
-
-  changeKarma(bot, message, increment) {
-    let name = message.match[1].trim().toLowerCase();
+  const changeKarma = (bot, message, increment) => {
+    let name = cleanName(message.match[1]);
     const reason = message.match[5];
 
     // No name, use last item used
     if (!name) {
-      name = this.cache[message.channel];
+      name = cache[message.channel];
     }
 
-    this.controller.storage.karma.get(name, (err, item) => {
+    controller.storage.karma.get(name, (err, item) => {
       if (!item) {
         item = {
           id: name,
@@ -71,23 +64,22 @@ export default class Karma {
       }
 
       // Save
-      this.controller.storage.karma.save(item);
+      controller.storage.karma.save(item);
 
       // Cache for ++ and -- with no name
-      this.cache[message.channel] = name;
+      cache[message.channel] = name;
 
       // Send the message
       bot.reply(message, `${name} has ${item.score} points`);
     });
-  }
+  };
 
-  printScore(bot, message) {
-    let name = message.match[2].trim().toLowerCase();
-    this.controller.storage.karma.get(name, (err, item) => {
-      if (name.charAt(0) === ':') {
-        name = name.replace(/(^\s*@)|([,\s]*$)/g, '')
-      } else {
-        name = name.replace(/(^\s*@)|([,:\s]*$)/g, '')
+  const printScore = (bot, message) => {
+    const name = cleanName(message.match[2]);
+    controller.storage.karma.get(name, (err, item) => {
+      if (!item) {
+        bot.reply(message, `${name} has 0 points`);
+        return;
       }
 
       if (item.reasons.length > 0) {
@@ -96,5 +88,13 @@ export default class Karma {
         bot.reply(message, `${name} has ${item.score} points`);
       }
     });
-  }
+  };
+
+  const cleanName = (name) => {
+    if (name.charAt(0) === ':') {
+      return name.replace(/(^\s*@)|([,\s]*$)/g, '').trim().toLowerCase();
+    } else {
+      return name.replace(/(^\s*@)|([,:\s]*$)/g, '').trim().toLowerCase();
+    }
+  };
 }
