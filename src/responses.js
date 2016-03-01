@@ -4,20 +4,21 @@
  * SETUP:
  *   requires redis with custom storage method "responses"
  *   env variables:
- *     EXPRESS_PORT // port to run express on
+ *     OMEGA_APP_ID     // the Omega app ID
+ *     OMEGA_APP_SECRET // the Omega app secret key
+ *     OMEGA_CALLBACK   // the callback URL for the Omega app
+ *     PORT             // port to run express on
  *
  * USAGE:
  *   <trigger> // response
  *   To setup trigger / response pairs, visit the express endpoint
  */
 
-import express from 'express';
-
-const app = express();
+import passport from 'passport';
+import { Strategy as OmegaStrategy } from 'passport-omega';
 
 export default class Responses {
   constructor(controller) {
-    // This binding *sigh*
     this.loadResponses = this.loadResponses.bind(this);
     this.setupServer = this.setupServer.bind(this);
     this.initResponses = this.initResponses.bind(this);
@@ -30,25 +31,53 @@ export default class Responses {
   }
 
   setupServer() {
-    app.set('view engine', 'jade');
+    // setup passport for authentication via Omega
+    passport.use(new OmegaStrategy({
+      clientID: process.env.OMEGA_APP_ID,
+      clientSecret: process.env.OMEGA_APP_SECRET,
+      callbackURL: process.env.OMEGA_CALLBACK,
+    }, (accessToken, refreshToken, profile, done) => {
+      done(null, profile);
+    }));
 
-    app.get('/', function (req, res) {
-      res.send('GET request to the homepage');
-    });
+    // setup the webserver
+    this.controller.setupWebserver(process.env.PORT, (err, app) => {
+      app.set('view engine', 'jade');
 
-    app.listen(process.env.EXPRESS_PORT, function () {
-      console.log('Example app listening on port 3000!');
+      app.get('/', (req, res) => {
+        res.render('index');
+      });
+
+      // Omega Login
+      app.get('/auth/omega', passport.authenticate('omega'));
+
+      app.get(
+        '/auth/omega/callback',
+        passport.authenticate('omega', {
+          successRedirect: '/dashboard',
+          failureRedirect: '/',
+        })
+      );
+
+      // Responses dashboard
+      app.get('/dashboard', (req, res) => {
+        res.render('dashboard', { responses: this.responses });
+      });
     });
   }
 
   // Get the responses from redis
   loadResponses() {
-    this.controller.storage.responses.all(this.initResponses, { type: 'array' });
+    this.controller.storage.responses.all(
+      this.initResponses,
+      { type: 'array' }
+    );
   }
 
   // Setup listeners for all responses
   initResponses(err, responses) {
-    for (const response in this.responses) {
+    this.responses = responses;
+    for (const response in responses) {
       this.controller.hears(
         response.regex,
         ['ambient'],
