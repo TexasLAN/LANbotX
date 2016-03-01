@@ -2,8 +2,7 @@
  * Karma.js, a plus-plus clone for botkit
  *
  * SETUP:
- *   import Karma from './karma';
- *   new Karma(controller);
+ *   requires redis with custom storage method "karma"
  *
  * USAGE:
  *   <item>++ // increment score for item
@@ -12,42 +11,66 @@
 
 export default class Karma {
   constructor(controller) {
+    this.changeKarma = this.changeKarma.bind(this);
+
+    // caches
+    this.controller = controller;
     this.cache = {};
 
     // ++
     controller.hears(
       "^([\\s\\w'@.\\-:]*)\\s*(\\+\\+)(?:\\s+(?:for|because|cause|cuz|as)\\s+(.+))?$",
       ['ambient'],
-      this.plus.bind(this)
+      (bot, message) => this.changeKarma(bot, message, true)
     );
 
     // --
     controller.hears(
       "^([\\s\\w'@.\\-:]*)\\s*(--|—)(?:\\s+(?:for|because|cause|cuz|as)\\s+(.+))?$",
       ['ambient'],
-      this.minus.bind(this)
+      (bot, message) => this.changeKarma(bot, message, false)
     );
   }
 
-  plus(bot, message) {
-    const name = message.match[1];
-    const reason = message.match[3];
-    this.cache[name] = {
-      score: this.cache[name] ? this.cache[name].score + 1 : 1,
-      reason: this.reason,
-    };
+  changeKarma(bot, message, increment) {
+    let name = message.match[1];
+    const reason = message.match[5];
 
-    bot.reply(message, `${name} has ${this.cache[name].score} points`);
-  }
+    // No name, use last item used
+    if (!name) {
+      name = this.cache[message.channel];
+    }
 
-  minus(bot, message) {
-    const name = message.match[1];
-    const reason = message.match[3];
-    this.cache[name] = {
-      score: this.cache[name] ? this.cache[name].score - 1 : -1,
-      reason: this.reason,
-    };
+    this.controller.storage.karma.get(name, (err, item) => {
+      if (!item) {
+        item = { id: name };
+      }
 
-    bot.reply(message, `${name} has ${this.cache[name].score} points`);
+      // Set the karma if it doesn't exist
+      if (!item.karma) {
+        item.karma = { score: 0, reasons: [] };
+      }
+
+      // Update score
+      if (increment) {
+        item.karma.score++;
+      } else {
+        item.karma.score--;
+      }
+
+      // Update reason
+      if (reason) {
+        item.karma.reasons.push(reason);
+      }
+
+      // Save
+      this.controller.storage.karma.save(item);
+
+      // Cache for ++ and -- with no name
+      this.cache[message.channel] = name;
+
+      // Send the message
+      bot.reply(message, `${name} has ${item.karma.score} points`);
+    });
   }
 }
