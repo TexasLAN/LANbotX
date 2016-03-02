@@ -19,6 +19,8 @@ import Path from 'path';
  * Initialize botkit
  */
 const storage = redis({
+  host: process.env.REDIS_PORT_6379_TCP_ADDR || '127.0.0.1',
+  port: process.env.REDIS_PORT_6379_TCP_PORT || 6379,
   namespace: 'lanbot',
   methods: ['teams', 'users', 'channels', 'responses', 'karma'],
 });
