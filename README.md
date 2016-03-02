@@ -11,10 +11,11 @@
 
 LANBotX is an attempt to rewrite LANBot from the ground up to serve us better
 
+[![dockeri.co](http://dockeri.co/image/rmlynch/lanbotx)](https://hub.docker.com/rmlynch/lanbotx/)
+
 ## Usage
-* install node dependencies
-  * `npm install`
-* set the slack access token in the environment
-  * `export token=<token>`
-* run the bot!
-  * `npm start`
+* install docker
+* create `.env` file with proper values
+  * `token=<token>`
+* start docker
+  * `docker-compose up`
