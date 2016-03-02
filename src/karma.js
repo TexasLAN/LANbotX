@@ -35,19 +35,33 @@ export default (controller) => {
 
   const changeKarma = (bot, message, increment) => {
     let name = cleanName(message.match[1]);
-    const reason = message.match[5];
+    let reason = message.match[3];
 
-    // No name, use last item used
-    if (!name) {
-      name = cache[message.channel];
+    // Make sure we can do something valid
+    if (!name && !cache[message.channel]) {
+      return;
+    }
+
+    // Get name / reason from cache
+    if (!name && !reason) {
+      name = cache[message.channel].name;
+      reason = cache[message.channel].reason;
+    } else if (!name && reason) {
+      name = cache[message.channel].name;
+      reason = reason.trim();
+    }
+    
+    if (reason) {
+      reason = reason.trim();
     }
 
     controller.storage.karma.get(name, (err, item) => {
+      // We're creating a new item
       if (!item) {
         item = {
           id: name,
           score: 0,
-          reasons: [],
+          reasons: {},
         };
       }
 
@@ -60,17 +74,37 @@ export default (controller) => {
 
       // Update reason
       if (reason) {
-        item.reasons.push(reason);
+        // Save the reason if we haven't seen it before
+        if (!item.reasons[reason]) {
+          item.reasons[reason] = 0;
+        }
+
+        // Update the reason's score
+        if (increment) {
+          item.reasons[reason]++;
+        } else {
+          item.reasons[reason]--;
+        }
       }
 
       // Save
       controller.storage.karma.save(item);
 
       // Cache for ++ and -- with no name
-      cache[message.channel] = name;
+      cache[message.channel] = { name, reason };
+
+      const points = item.score === 1 ? 'point' : 'points';
 
       // Send the message
-      bot.reply(message, `${name} has ${item.score} points`);
+      if (!reason) {
+        bot.reply(message, `${name} has ${item.score} ${points}`);
+      } else {
+        const are = item.reasons[reason] === 1 ? 'is' : 'are';
+        bot.reply(
+          message,
+          `${name} has ${item.score} points, ${item.reasons[reason]} of which ${are} for ${reason}`
+        );
+      }
     });
   };
 
@@ -82,10 +116,12 @@ export default (controller) => {
         return;
       }
 
+      const points = item.score === 1 ? 'point' : 'points';
+
       if (item.reasons.length > 0) {
-        bot.reply(message, `${name} has ${item.score} points`);
+        bot.reply(message, `${name} has ${item.score} ${points}`);
       } else {
-        bot.reply(message, `${name} has ${item.score} points`);
+        bot.reply(message, `${name} has ${item.score} ${points}`);
       }
     });
   };
