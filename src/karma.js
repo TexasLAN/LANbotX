@@ -48,9 +48,8 @@ export default (controller) => {
       reason = cache[message.channel].reason;
     } else if (!name && reason) {
       name = cache[message.channel].name;
-      reason = reason.trim();
     }
-    
+
     if (reason) {
       reason = reason.trim();
     }
