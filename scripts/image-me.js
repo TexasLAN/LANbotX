@@ -20,14 +20,14 @@ export default (controller) => {
 
   // image me
   controller.hears(
-    '(image|img)( me)? (.+)',
+    /(image|img)( me)? (.+)/i,
     ['direct_message', 'direct_mention'],
     (bot, message) => imageMe(bot, message)
   );
 
   // animate me
   controller.hears(
-    'animate( me)? (.+)',
+    /animate( me)? (.+)/i,
     ['direct_message', 'direct_mention'],
     (bot, message) => animateMe(bot, message)
   );

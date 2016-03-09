@@ -14,28 +14,28 @@ export default (controller) => {
 
   // ++
   controller.hears(
-    "^([\\s\\w'@.\\-:]*)\\s*(\\+\\+)(?:\\s+(?:for|because|cause|cuz|as)\\s+(.+))?$",
+    /^([\s\w'@.\-:]*)\s*(\+\+)(?:\s+(?:for|because|cause|cuz|as)\s+(.+))?$/i,
     ['ambient'],
     (bot, message) => changeKarma(bot, message, true)
   );
 
   // --
   controller.hears(
-    "^([\\s\\w'@.\\-:]*)\\s*(--|—)(?:\\s+(?:for|because|cause|cuz|as)\\s+(.+))?$",
+    /^([\s\w'@.\-:]*)\s*(--|—)(?:\s+(?:for|because|cause|cuz|as)\s+(.+))?$/i,
     ['ambient'],
     (bot, message) => changeKarma(bot, message, false)
   );
 
   // score
   controller.hears(
-    "score (for\\s)?(.*)",
+    /score (for\s)?(.*)/i,
     ['direct_mention', 'direct_message'],
     (bot, message) => printScore(bot, message)
   );
 
   // top or bottom [n]
   controller.hears(
-    "(top|bottom) (\\d+)",
+    /(top|bottom) (\d+)/i,
     ['direct_mention', 'direct_message'],
     (bot, message) => top(bot, message)
   );
