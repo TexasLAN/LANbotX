@@ -14,6 +14,7 @@ import Botkit from 'botkit';
 import redis from 'botkit/lib/storage/redis_storage';
 import fs from 'fs';
 import Path from 'path';
+import monitor from './src/monitor';
 
 /**
  * Initialize botkit
@@ -30,13 +31,15 @@ const controller = Botkit.slackbot({
   storage: storage,
 });
 
-controller.spawn({
+const worker = controller.spawn({
   token: process.env.token
 }).startRTM((err) => {
   if (err) {
     throw new Error(err);
   }
 });
+
+monitor(controller, worker);
 
 /**
  * Determine if bot is running
@@ -52,13 +55,13 @@ controller.hears(
 /**
  * Initalize scripts
  */
-for(const file of fs.readdirSync('./src/')) {
+for(const file of fs.readdirSync('./scripts/')) {
   if (Path.extname(file) !== '.js') {
     continue;
   }
 
   try {
-    const script = require(`./src/${file}`).default;
+    const script = require(`./scripts/${file}`).default;
     new script(controller);
   } catch (e) {
     console.error(`Unable to load ${file}: ${e.stack}`);
