@@ -33,18 +33,11 @@ export default (controller) => {
     (bot, message) => printScore(bot, message)
   );
 
-  // top [n]
+  // top or bottom [n]
   controller.hears(
-    "top (\\d+)",
+    "(top|bottom) (\\d+)",
     ['direct_mention', 'direct_message'],
     (bot, message) => top(bot, message)
-  );
-
-  // bottom [n]
-  controller.hears(
-    "bottom (\\d+)",
-    ['direct_mention', 'direct_message'],
-    (bot, message) => bottom(bot, message)
   );
 
   const changeKarma = (bot, message, increment) => {
@@ -139,55 +132,27 @@ export default (controller) => {
     });
   };
 
-
   const top = (bot, message) => {
-    const amount = message.match[1];
+    const reverse = message.match[1] === 'bottom';
+    const amount = message.match[2];
     controller.storage.karma.all((err, items) => {
-      const tops = [];
+      // Sort all the scores
+      let sorted = items.sort((a, b) => {
+        return b.score - a.score;
+      });
 
-      for (const item of items) {
-        tops.push({
-          name: item.id,
-          score: item.score,
-        });
+      // Reverse if want the bottom [n]
+      if (reverse) {
+        sorted = sorted.reverse();
       }
 
-      const sorted = tops.sort((a, b) => {
-        return b.score - a.score;
-      }).slice(0, amount);
+      // Get the [n] we care about
+      sorted = sorted.slice(0, amount);
 
       if (sorted.length > 0) {
         let reply = "";
         for (let i = 0; i < sorted.length; i++) {
-          reply += `${i + 1}. ${sorted[i].name} : ${sorted[i].score}\n`;
-        }
-        bot.reply(message, reply);
-      } else {
-        bot.reply(message, "No scores to keep track of yet!");
-      }
-    }, { type: 'array' });
-  };
-
-  const bottom = (bot, message) => {
-    const amount = message.match[1];
-    controller.storage.karma.all((err, items) => {
-      const tops = [];
-
-      for (const item of items) {
-        tops.push({
-          name: item.id,
-          score: item.score,
-        });
-      }
-
-      const sorted = tops.sort((a, b) => {
-        return b.score - a.score;
-      }).reverse().slice(0, amount);
-
-      if (sorted.length > 0) {
-        let reply = "";
-        for (let i = 0; i < sorted.length; i++) {
-          reply += `${i + 1}. ${sorted[i].name} : ${sorted[i].score}\n`;
+          reply += `${i + 1}. ${sorted[i].id} : ${sorted[i].score}\n`;
         }
         bot.reply(message, reply);
       } else {
