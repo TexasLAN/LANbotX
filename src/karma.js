@@ -33,6 +33,20 @@ export default (controller) => {
     (bot, message) => printScore(bot, message)
   );
 
+  // top [n]
+  controller.hears(
+    "top (\\d+)",
+    ['direct_mention', 'direct_message'],
+    (bot, message) => top(bot, message)
+  );
+
+  // bottom [n]
+  controller.hears(
+    "bottom (\\d+)",
+    ['direct_mention', 'direct_message'],
+    (bot, message) => bottom(bot, message)
+  );
+
   const changeKarma = (bot, message, increment) => {
     let name = cleanName(message.match[1]);
     let reason = message.match[3];
@@ -123,6 +137,63 @@ export default (controller) => {
         bot.reply(message, `${name} has ${item.score} ${points}`);
       }
     });
+  };
+
+
+  const top = (bot, message) => {
+    const amount = message.match[1];
+    controller.storage.karma.all((err, items) => {
+      const tops = [];
+
+      for (const item of items) {
+        tops.push({
+          name: item.id,
+          score: item.score,
+        });
+      }
+
+      const sorted = tops.sort((a, b) => {
+        return b.score - a.score;
+      }).slice(0, amount);
+
+      if (sorted.length > 0) {
+        let reply = "";
+        for (let i = 0; i < sorted.length; i++) {
+          reply += `${i + 1}. ${sorted[i].name} : ${sorted[i].score}\n`;
+        }
+        bot.reply(message, reply);
+      } else {
+        bot.reply(message, "No scores to keep track of yet!");
+      }
+    }, { type: 'array' });
+  };
+
+  const bottom = (bot, message) => {
+    const amount = message.match[1];
+    controller.storage.karma.all((err, items) => {
+      const tops = [];
+
+      for (const item of items) {
+        tops.push({
+          name: item.id,
+          score: item.score,
+        });
+      }
+
+      const sorted = tops.sort((a, b) => {
+        return b.score - a.score;
+      }).reverse().slice(0, amount);
+
+      if (sorted.length > 0) {
+        let reply = "";
+        for (let i = 0; i < sorted.length; i++) {
+          reply += `${i + 1}. ${sorted[i].name} : ${sorted[i].score}\n`;
+        }
+        bot.reply(message, reply);
+      } else {
+        bot.reply(message, "No scores to keep track of yet!");
+      }
+    }, { type: 'array' });
   };
 
   const cleanName = (name) => {
