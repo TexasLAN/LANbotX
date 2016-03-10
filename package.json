@@ -27,7 +27,7 @@
     "babel-cli": "^6.5.1",
     "babel-preset-es2015": "^6.5.0",
     "botkit": "0.0.7",
-    "jade": "^1.11.0",
+    "express-handlebars": "^3.0.0",
     "passport": "^0.3.2",
     "passport-omega": "0.0.1",
     "redis": "^2.4.2",

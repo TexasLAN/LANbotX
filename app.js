@@ -15,6 +15,7 @@ import redis from 'botkit/lib/storage/redis_storage';
 import fs from 'fs';
 import Path from 'path';
 import monitor from './src/monitor';
+import webserver from './src/webserver';
 
 /**
  * Initialize botkit
@@ -40,6 +41,8 @@ const worker = controller.spawn({
 });
 
 monitor(controller, worker);
+
+webserver(controller);
 
 /**
  * Determine if bot is running
