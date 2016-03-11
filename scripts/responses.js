@@ -16,9 +16,14 @@ export default (controller) => {
 
   // Setup listeners for all responses
   const initResponses = (err, responses) => {
-    for (const response in responses) {
-      this.controller.hears(
-        response.regex,
+    for (const response of responses) {
+      // Ignore deleted resposnes
+      if (response.regex === '__DELTED__') {
+        continue;
+      }
+
+      controller.hears(
+        new RegExp(response.regex, 'i'),
         ['ambient'],
         (bot, message) => {
           bot.reply(message, response.reply);
