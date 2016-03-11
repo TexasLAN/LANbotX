@@ -34,8 +34,7 @@
     "passport": "^0.3.2",
     "passport-omega": "0.0.1",
     "redis": "^2.4.2",
-    "requests": "^0.1.7",
-    "rethinkdb": "^2.2.2"
+    "requests": "^0.1.7"
   },
   "devDependencies": {
     "nodemon": "^1.9.1"

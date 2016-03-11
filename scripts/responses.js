@@ -16,6 +16,11 @@ export default (controller) => {
 
   // Setup listeners for all responses
   const initResponses = (err, responses) => {
+    // No responses to process
+    if (!responses) {
+      return;
+    }
+
     for (const response of responses) {
       // Ignore deleted resposnes
       if (response.regex === '__DELTED__') {

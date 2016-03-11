@@ -67,6 +67,11 @@ export default (controller) => {
       }
 
       controller.storage.responses.all((err, responses) => {
+        // Handle no responses
+        if (!responses) {
+          responses = [];
+        }
+
         responses = responses.filter((r) => r.reply !== '__DELETED__');
         res.render('dashboard', { responses: responses });
       }, {
